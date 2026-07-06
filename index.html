@@ -1,848 +1,504 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Harvey's — Karaoke Lounge Almaty</title>
-<meta name="description" content="Harvey's — премиальный караоке-клуб в Алматы. Приватные залы, авторский бар и живой звук.">
-
-<!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com"></script>
-
-<!-- GSAP -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<!-- Lenis smooth scroll -->
-<script src="https://unpkg.com/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
-<!-- Barba.js -->
-<script src="https://unpkg.com/@barba/core"></script>
-<!-- SplitType -->
-<script src="https://unpkg.com/split-type"></script>
-
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          void:    '#0b0a08',
-          panel:   '#161310',
-          panel2:  '#1e1a15',
-          brass:   '#c19a49',
-          brasslt: '#e3c27c',
-          wine:    '#5c1c26',
-          winelt:  '#7a2733',
-          ivory:   '#ece6d9',
-          smoke:   '#8d8577',
-          line:    'rgba(236,230,217,0.10)',
-        },
-        fontFamily: {
-          display: ['"Unbounded"', 'sans-serif'],
-          body: ['"Manrope"', 'sans-serif'],
-          mono: ['"Space Mono"', 'monospace'],
-        },
-      }
-    }
-  }
-</script>
-
-<style>
-  html { background: #0b0a08; }
-  body {
-    background-color: #0b0a08;
-    color: #ece6d9;
-    font-family: 'Manrope', sans-serif;
-    overflow-x: hidden;
-  }
-
-  ::selection { background: #c19a49; color: #0b0a08; }
-
-  /* thin premium scrollbar */
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: #0b0a08; }
-  ::-webkit-scrollbar-thumb { background: #3a3226; border-radius: 4px; }
-
-  .noise::before{
-    content:"";
-    position:fixed; inset:0; pointer-events:none; z-index:2;
-    opacity:.035; mix-blend-mode:overlay;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
-  .eyebrow{
-    font-family:'Space Mono', monospace;
-    letter-spacing:.25em;
-    text-transform:uppercase;
-    font-size:.72rem;
-    color:#c19a49;
-  }
-
-  .heading-line{ position:relative; }
-
-  /* Curtains */
-  #curtain-l, #curtain-r{
-    position:fixed; top:0; bottom:0; width:51%; z-index:60;
-    background: linear-gradient(120deg,#3a0f16 0%, #5c1c26 45%, #26090d 100%);
-    box-shadow: inset -40px 0 60px rgba(0,0,0,.55);
-  }
-  #curtain-l{ left:0; }
-  #curtain-r{ right:0; box-shadow: inset 40px 0 60px rgba(0,0,0,.55); }
-  #curtain-l::after, #curtain-r::after{
-    content:""; position:absolute; inset:0;
-    background-image: repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 6px, rgba(255,255,255,.03) 6px 14px);
-  }
-
-  /* Media frame placeholders — graceful fallback before real images are added */
-  .media-frame{
-    position:relative; overflow:hidden; background:
-      radial-gradient(120% 140% at 20% 0%, #241d15 0%, #14110d 55%, #0b0a08 100%);
-    border:1px solid rgba(236,230,217,0.08);
-  }
-  .media-frame img{
-    width:100%; height:100%; object-fit:cover; display:block;
-    position:relative; z-index:1;
-  }
-  .media-frame .ph-label{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    text-align:center; padding:1rem;
-    font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.15em;
-    text-transform:uppercase; color:#5a5245;
-  }
-  .media-frame img.loaded ~ .ph-label{ display:none; }
-
-  .nav-link{ position:relative; }
-  .nav-link::after{
-    content:""; position:absolute; left:0; bottom:-4px; width:0; height:1px; background:#c19a49;
-    transition:width .35s ease;
-  }
-  .nav-link:hover::after{ width:100%; }
-
-  .chip{
-    font-family:'Space Mono',monospace; font-size:.72rem; letter-spacing:.05em;
-    border:1px solid rgba(236,230,217,0.18); color:#c9c2b3;
-    padding:.55rem 1.1rem; border-radius:999px; white-space:nowrap;
-    transition:all .3s ease; cursor:pointer; background:transparent;
-  }
-  .chip.active, .chip:hover{
-    border-color:#c19a49; color:#0b0a08; background:#c19a49;
-  }
-
-  .menu-card{
-    border:1px solid rgba(236,230,217,0.08);
-    background:#12100c;
-    transition:transform .45s cubic-bezier(.16,1,.3,1), border-color .3s ease;
-  }
-  .menu-card:hover{ transform:translateY(-6px); border-color:rgba(193,154,73,.5); }
-
-  .marquee-track{ display:flex; width:200%; }
-  .marquee-track span{ white-space:nowrap; }
-
-  .btn-primary{
-    background:#c19a49; color:#0b0a08; font-weight:700;
-    transition:transform .3s ease, background .3s ease, box-shadow .3s ease;
-  }
-  .btn-primary:hover{ background:#e3c27c; transform:translateY(-2px); box-shadow:0 10px 30px rgba(193,154,73,.25); }
-
-  .btn-ghost{
-    border:1px solid rgba(236,230,217,.3); color:#ece6d9;
-    transition:all .3s ease;
-  }
-  .btn-ghost:hover{ border-color:#c19a49; color:#c19a49; }
-
-  .spotlight{
-    pointer-events:none; position:absolute; inset:0; z-index:5;
-    background: radial-gradient(420px circle at var(--x,50%) var(--y,30%), rgba(193,154,73,0.14), transparent 70%);
-  }
-
-  .split-line{ overflow:hidden; }
-
-  .room-num{
-    font-family:'Space Mono',monospace; font-size:.8rem; color:#5c1c26;
-    -webkit-text-stroke: 1px #7a2733; color:transparent;
-  }
-
-  @media (max-width:768px){
-    #curtain-l, #curtain-r{ width:51%; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harvey's Karaoke Club & Pub</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Cinzel', 'serif'],
+                        sans: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            DEFAULT: '#c5a880',
+                            dark: '#9e8259',
+                            light: '#e5cbb0'
+                        },
+                        darkbg: '#0a0a0a',
+                        cardbg: '#121212'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
+    <script src="https://unpkg.com/@barba/core"></script>
+    <script src="https://unpkg.com/split-type"></script>
+    
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e5e5e5;
+            overflow-x: hidden;
+        }
+        .text-reveal .char {
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .parallax-img {
+            will-change: transform;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c5a880;
+            border-radius: 2px;
+        }
+    </style>
 </head>
+<body data-barba="wrapper" class="font-sans antialiased">
 
-<body class="bg-void noise antialiased">
+    <div id="custom-cursor" class="fixed top-0 left-0 w-8 h-8 border border-gold rounded-full pointer-events-none z-50 mix-blend-difference hidden md:block -translate-x-1/2 -translate-y-1/2"></div>
 
-<!-- Curtain intro -->
-<div id="curtain-l"></div>
-<div id="curtain-r"></div>
+    <header class="fixed top-0 left-0 w-full z-40 bg-darkbg/80 backdrop-blur-md border-b border-white/5 py-5 px-6 md:px-12 flex justify-between items-center">
+        <a href="#" class="font-serif text-2xl tracking-widest text-white font-bold">HARVEY'S</a>
+        <nav class="hidden md:flex space-x-8 text-xs tracking-widest font-medium uppercase text-neutral-400">
+            <a href="#about" class="hover:text-gold transition-colors duration-300">О нас</a>
+            <a href="#menu" class="hover:text-gold transition-colors duration-300">Меню</a>
+            <a href="#contacts" class="hover:text-gold transition-colors duration-300">Контакты</a>
+        </nav>
+        <a href="https://wa.me/77772395959" class="border border-gold px-6 py-2.5 text-xs tracking-widest uppercase text-gold hover:bg-gold hover:text-darkbg transition-all duration-500 font-semibold">Забронировать</a>
+    </header>
 
-<!-- ===================== NAV ===================== -->
-<header id="site-header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
-  <div class="max-w-7xl mx-auto px-6 md:px-10 flex items-center justify-between py-5">
-    <a href="#top" class="flex items-center gap-3 group">
-      <div class="media-frame w-11 h-11 rounded-full flex-shrink-0">
-        <img src="images/logo.png" alt="Harvey's logo" onerror="this.style.display='none'">
-        <div class="ph-label" style="font-size:.55rem;">LOGO</div>
-      </div>
-      <span class="font-display font-bold tracking-wide text-lg">HARVEY'S</span>
-    </a>
+    <main data-barba="container" data-barba-namespace="home" id="smooth-wrapper">
+        <div id="smooth-content">
 
-    <nav class="hidden lg:flex items-center gap-9 font-body text-sm text-ivory/85">
-      <a href="#about" class="nav-link">О клубе</a>
-      <a href="#rooms" class="nav-link">Залы</a>
-      <a href="#menu" class="nav-link">Меню</a>
-      <a href="#gallery" class="nav-link">Атмосфера</a>
-      <a href="#contacts" class="nav-link">Контакты</a>
-    </nav>
+            <section id="about" class="relative min-h-screen flex items-center justify-center px-6 pt-24 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-darkbg z-10"></div>
+                <div class="absolute inset-0 opacity-40 scale-105 parallax-img" data-speed="-0.15">
+                    <img src="https://raw.githubusercontent.com/arabovgenius-ux/Harvey-s/main/IMG_4388.jpeg" alt="Harvey's Atmosphere" class="w-full h-full object-cover filter brightness-[0.3] contrast-125">
+                </div>
+                
+                <div class="relative z-20 max-w-5xl text-center">
+                    <span class="text-xs font-semibold tracking-[0.4em] text-gold uppercase block mb-4">Premium Karaoke & Pub</span>
+                    <h1 id="hero-title" class="font-serif text-5xl md:text-8xl font-bold tracking-tight text-white uppercase leading-none mb-8">
+                        Harvey’s Almaty
+                    </h1>
+                    <p class="text-neutral-400 text-sm md:text-base max-w-xl mx-auto leading-relaxed font-light">
+                        Эксклюзивное пространство звука, гастрономии и премиального отдыха. Ультрасовременная акустика и безупречный сервис в самом сердце Алматы.
+                    </p>
+                    <div class="mt-12">
+                        <a href="#menu" class="inline-block bg-gold text-darkbg font-semibold px-8 py-4 text-xs tracking-widest uppercase hover:bg-gold-light transition-all duration-300 transform hover:-translate-y-0.5">
+                            Изучить премиум меню
+                        </a>
+                    </div>
+                </div>
+            </section>
 
-    <a href="https://wa.me/77772395959" target="_blank" rel="noopener"
-       class="hidden md:inline-flex btn-primary rounded-full px-6 py-2.5 text-sm font-body">
-      Забронировать
-    </a>
+            <section class="py-24 px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center bg-darkbg border-t border-white/5">
+                <div class="overflow-hidden h-[400px] md:h-[600px] relative rounded-sm group border border-white/5">
+                    <img src="https://raw.githubusercontent.com/arabovgenius-ux/Harvey-s/main/IMG_4389.jpeg" alt="Gastronomy" class="w-full h-full object-cover parallax-img transform scale-110 group-hover:scale-105 transition-transform duration-700 filter brightness-90" data-speed="0.05">
+                </div>
+                <div class="space-y-6 md:p-8">
+                    <h2 class="font-serif text-3xl md:text-5xl font-bold text-white tracking-wide uppercase">Авторская Кухня & Бар</h2>
+                    <p class="text-neutral-400 text-sm md:text-base leading-relaxed font-light">
+                        Каждое блюдо в меню Harvey’s спроектировано как идеальное дополнение к вашей исключительной ночи. От изысканных мясных деликатесов из печи хоспер до тщательно отобранных сортов премиального пенного.
+                    </p>
+                    <div class="pt-4 grid grid-cols-2 gap-4 border-t border-white/10">
+                        <div>
+                            <span class="block text-2xl font-serif text-gold font-bold">12%</span>
+                            <span class="text-xs uppercase tracking-widest text-neutral-500">Обслуживание</span>
+                        </div>
+                        <div>
+                            <span class="block text-2xl font-serif text-gold font-bold">Josper</span>
+                            <span class="text-xs uppercase tracking-widest text-neutral-500">Закрытая печь</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    <button id="burger" class="lg:hidden flex flex-col gap-1.5 w-7">
-      <span class="h-[1.5px] bg-ivory w-full"></span>
-      <span class="h-[1.5px] bg-ivory w-full"></span>
-    </button>
-  </div>
+            <section id="menu" class="py-24 bg-darkbg border-t border-white/5">
+                <div class="px-6 md:px-12 max-w-7xl mx-auto">
+                    <div class="text-center mb-20">
+                        <span class="text-xs font-semibold tracking-[0.4em] text-gold uppercase block mb-3">Gastronomy Card</span>
+                        <h2 class="font-serif text-4xl md:text-6xl font-bold text-white uppercase tracking-wider">Полное Меню</h2>
+                        <div class="w-24 h-[1px] bg-gold mx-auto mt-6"></div>
+                    </div>
 
-  <!-- mobile menu -->
-  <div id="mobile-menu" class="lg:hidden hidden flex-col gap-6 px-8 pb-8 pt-2 bg-void/98 backdrop-blur font-body text-lg">
-    <a href="#about">О клубе</a>
-    <a href="#rooms">Залы</a>
-    <a href="#menu">Меню</a>
-    <a href="#gallery">Атмосфера</a>
-    <a href="#contacts">Контакты</a>
-    <a href="https://wa.me/77772395959" class="btn-primary text-center rounded-full px-6 py-3 mt-2">Забронировать</a>
-  </div>
-</header>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                        
+                        <div class="space-y-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Холодные закуски</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Русская закуска</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Конский Хамон</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 190</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Бастурма из говядины</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 190</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Мясная доска</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">9 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Сырная тарелка</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">9 590</span></div>
+                            </div>
+                        </div>
 
-<!-- ===================== HERO ===================== -->
-<section id="top" class="relative min-h-[100svh] flex flex-col justify-end overflow-hidden">
-  <div class="spotlight" id="spotlight"></div>
+                        <div class="space-y-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Салаты</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Греческий</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 690</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Зеленый салат с креветками</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 890</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Свежий салат с авокадо</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 690</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Стейк салат</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Теплый салат с кониной</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Цезарь с курицей</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 290</span></div>
+                            </div>
+                        </div>
 
-  <div class="media-frame absolute inset-0">
-    <img src="images/hero.jpg" alt="Harvey's karaoke lounge" onerror="this.style.display='none'">
-    <div class="ph-label">HERO BACKGROUND · images/hero.jpg</div>
-  </div>
-  <div class="absolute inset-0 bg-gradient-to-t from-void via-void/70 to-void/30"></div>
-  <div class="absolute inset-0 bg-gradient-to-r from-void/60 via-transparent to-void/60"></div>
+                        <div class="space-y-8 lg:col-span-2 pt-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Горячие и пивные закуски</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Отборные раки (100 гр.)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 000</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Картофельные чипсы</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 490</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Соленый арахис</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 790</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Фисташки</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 290</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Джерки куриные</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Джерки говяжьи</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Чечил</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 690</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Жареный чечил</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 890</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Чесночные гарлики с соусом Тар-тар</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Луковые кольца</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 390</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Сочные мини чебуреки</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Куриные семечки</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 490</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Куриные стрипсы с соусом Тар-тар</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Сырные палочки с горчичным соусом</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 390</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Крылья Трилла ин Манила</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 190</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Куриные крылья в соусе BBQ</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 190</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Жаременные пивные креветки</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 690</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Бараньи семечки</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 890</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Мини колбаски из курочки</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Мини колбаски из говядины</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">5 590</span></div>
+                            </div>
+                        </div>
 
-  <div class="relative z-10 max-w-7xl mx-auto w-full px-6 md:px-10 pb-16 md:pb-24 pt-40">
-    <p class="eyebrow mb-6" data-reveal>Karaoke Lounge · Almaty</p>
-    <h1 class="font-display font-black uppercase leading-[0.88] text-[16vw] md:text-[8.5vw] lg:text-[7.2rem] text-ivory" id="hero-title">
-      Harvey's
-    </h1>
-    <div class="mt-8 max-w-xl split-line">
-      <p class="text-base md:text-lg text-ivory/75 font-light" data-reveal>
-        Три приватных зала, авторская кухня и звук, который слышно сердцем.
-        Место в центре Алматы, где обычный вечер превращается в историю.
-      </p>
-    </div>
+                        <div class="space-y-8 lg:col-span-2 pt-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Пивные сеты</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div class="bg-cardbg p-6 border border-white/5 rounded-sm flex flex-col justify-between">
+                                    <div>
+                                        <h4 class="text-white font-medium text-sm mb-2">Пивной Сет №1</h4>
+                                        <p class="text-xs text-neutral-400 font-light leading-relaxed mb-4">Фисташки, арахис, чипсы, чечил</p>
+                                    </div>
+                                    <span class="font-serif text-gold font-semibold text-base">6 990</span>
+                                </div>
+                                <div class="bg-cardbg p-6 border border-white/5 rounded-sm flex flex-col justify-between">
+                                    <div>
+                                        <h4 class="text-white font-medium text-sm mb-2">Пивной Сет №2</h4>
+                                        <p class="text-xs text-neutral-400 font-light leading-relaxed mb-4">Джерки куриные, гарлики, куриные семечки, соус Тар-тар</p>
+                                    </div>
+                                    <span class="font-serif text-gold font-semibold text-base">7 990</span>
+                                </div>
+                                <div class="bg-cardbg p-6 border border-white/5 rounded-sm flex flex-col justify-between">
+                                    <div>
+                                        <h4 class="text-white font-medium text-sm mb-2">Пивной Сет №3</h4>
+                                        <p class="text-xs text-neutral-400 font-light leading-relaxed mb-4">Жареные пивные креветки, крылья Трилла ин Манила, куриные стрипсы, 2 соуса: Тар-тар и Самбал</p>
+                                    </div>
+                                    <span class="font-serif text-gold font-semibold text-base">11 990</span>
+                                </div>
+                            </div>
+                        </div>
 
-    <div class="mt-10 flex flex-wrap items-center gap-4" data-reveal>
-      <a href="https://wa.me/77772395959" target="_blank" rel="noopener" class="btn-primary rounded-full px-8 py-4 text-sm">
-        Забронировать зал
-      </a>
-      <a href="#menu" class="btn-ghost rounded-full px-8 py-4 text-sm">Смотреть меню</a>
-    </div>
-  </div>
+                        <div class="space-y-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Тако и кесадилья</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Тако с курицей и ананасом</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 390</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Тако с томленым ребрышком</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Тако с креветками</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 890</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Кесадилья с цыпленком</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 690</span></div>
+                            </div>
+                        </div>
 
-  <div class="absolute bottom-8 right-8 z-10 hidden md:flex flex-col items-center gap-3 text-ivory/50">
-    <span class="font-mono text-[.65rem] tracking-widest [writing-mode:vertical-rl]">SCROLL</span>
-    <span class="w-px h-10 bg-ivory/30"></span>
-  </div>
-</section>
+                        <div class="space-y-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Супы</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Суп лапша по-домашнему</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Домашние пельмени с говядиной</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 290</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Рамен с курицей</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 790</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Рамен с говядиной</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Том ям</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">5 190</span></div>
+                            </div>
+                        </div>
 
-<!-- ===================== MARQUEE ===================== -->
-<div class="relative bg-wine border-y border-black/30 py-4 overflow-hidden">
-  <div class="marquee-track font-display font-bold uppercase text-2xl md:text-4xl text-ivory/90" id="marquee">
-    <span class="px-6">Harvey's — Karaoke — Коктейли — Приватные залы — Живой звук — Harvey's — Karaoke — Коктейли — Приватные залы — Живой звук —&nbsp;</span>
-    <span class="px-6">Harvey's — Karaoke — Коктейли — Приватные залы — Живой звук — Harvey's — Karaoke — Коктейли — Приватные залы — Живой звук —&nbsp;</span>
-  </div>
-</div>
+                        <div class="space-y-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Паста</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Спагетти Болоньезе</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Арабьята с креветками</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 190</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Карбонара с говяжьим беконом</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 390</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Паста с креветками и рукколой</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 790</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Феттучини Альфредо</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 390</span></div>
+                            </div>
+                        </div>
 
-<!-- ===================== ABOUT ===================== -->
-<section id="about" class="max-w-7xl mx-auto px-6 md:px-10 py-24 md:py-36">
-  <div class="grid lg:grid-cols-2 gap-16 items-center">
-    <div class="media-frame aspect-[4/5] rounded-sm" data-reveal>
-      <img src="images/about.jpg" alt="Интерьер Harvey's" onerror="this.style.display='none'">
-      <div class="ph-label">images/about.jpg</div>
-    </div>
+                        <div class="space-y-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Бургеры и сэндвичи</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Клаб сэндвич с курицей</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Бургер Классический</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Двойной Чизбургер</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Бургер Harvey's</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                            </div>
+                        </div>
 
-    <div>
-      <p class="eyebrow mb-5" data-reveal>О клубе</p>
-      <h2 class="font-display font-bold text-4xl md:text-5xl leading-tight mb-8" data-split>
-        Место, где ночь<br>становится историей
-      </h2>
-      <p class="text-ivory/70 leading-relaxed mb-6" data-reveal>
-        Harvey's — караоке-клуб в самом сердце Алматы для тех, кто ценит атмосферу,
-        а не просто зал с микрофоном. Мягкий свет, глубокий звук, внимательный сервис
-        и меню, за которое не стыдно перед гостями.
-      </p>
-      <p class="text-ivory/70 leading-relaxed mb-10" data-reveal>
-        Мы собрали студийную акустику, приватность закрытых залов и бар с авторскими
-        коктейлями в одном пространстве — чтобы вечер с друзьями, корпоратив
-        или день рождения проходили без компромиссов.
-      </p>
+                        <div class="space-y-8 lg:col-span-2 pt-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Блюда из печи хоспер</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Медальоны из конины</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">10 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Брискет</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">10 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Стейк Чакролл</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">10 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Стейк Стриплойн Choice</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">11 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Стейк Рибай Select</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">12 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Стейк Рибай Paprichi</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">12 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Стейк Рибай PRIME</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">15 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Шашлычки из куриного филе</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 290</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Шашлычки из говяжьей вырезки</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Шашлычки из креветок</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                            </div>
+                        </div>
 
-      <div class="grid grid-cols-2 gap-6" data-reveal>
-        <div class="border-l border-brass/40 pl-4">
-          <p class="font-display text-3xl font-bold text-brass">3</p>
-          <p class="text-sm text-ivory/60 mt-1">приватных зала разного формата</p>
+                        <div class="space-y-8 lg:col-span-2 pt-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Горячие блюда</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Чикен Кацу</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Чикен Масала</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 290</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Картошка по-домашнему (с вырезкой и луком)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 390</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Куриное филе на гриле с пастой Ptitim</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 390</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Форель на гриле</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">4 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Бифштекс с яйцом "Пашот"</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">5 190</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Колбаски на гриле (говядина/конина/курица)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">5 190</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Говядина по-азиатски с рисом</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">6 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Стейк из лосося в соусе том ям</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">8 390</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Медальоны из говяжьей вырезки со шпинатом</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">8 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Томленое ребро су-вид</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">12 990</span></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Гарниры & Соусы</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Рис</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 290</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Брокколи</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 690</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Картофель фри / Дольки</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 490</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Картофельное пюре</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 690</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Овощи гриль</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 390</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Хлебная корзина</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-xs text-neutral-400 font-light">Фирменные соусы (Тар-тар, Сырный, Ким-чи и др.)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">490</span></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Десерты</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Чизкейк Манго-Маракуйя</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Чизкейк Лесные Ягоды</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white group-hover:text-gold transition-colors duration-300 font-light">Тройной Шоколад</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 590</span></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-8 lg:col-span-2 pt-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Блюда на компанию</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="p-6 bg-cardbg border border-white/5 rounded-sm">
+                                    <div class="flex justify-between items-baseline mb-2"><h4 class="text-white font-medium text-sm">Колбасный сет</h4><span class="font-serif text-gold font-semibold text-sm">21 990</span></div>
+                                    <p class="text-xs text-neutral-400 font-light leading-relaxed">Колбаски собственного приготовления: говяжьи, куриные и конские с квашеной капустой, луком и картофельными дольками (на 4-5 персон).</p>
+                                </div>
+                                <div class="p-6 bg-cardbg border border-white/5 rounded-sm">
+                                    <div class="flex justify-between items-baseline mb-2"><h4 class="text-white font-medium text-sm">Лосось на компанию</h4><span class="font-serif text-gold font-semibold text-sm">37 990</span></div>
+                                    <p class="text-xs text-neutral-400 font-light leading-relaxed">В подаче с отварным картофелем, брокколи и миксом салата (на 5-6 персон).</p>
+                                </div>
+                                <div class="p-6 bg-cardbg border border-white/5 rounded-sm">
+                                    <div class="flex justify-between items-baseline mb-2"><h4 class="text-white font-medium text-sm">Микс гриль</h4><span class="font-serif text-gold font-semibold text-sm">39 990</span></div>
+                                    <p class="text-xs text-neutral-400 font-light leading-relaxed">Куриное филе, кюфта, домашние колбаски, стейк Стриплойн, квашеная капуста, овощи гриль, микс салата (на 5-6 человек).</p>
+                                </div>
+                                <div class="p-6 bg-cardbg border border-white/5 rounded-sm">
+                                    <div class="flex justify-between items-baseline mb-2"><h4 class="text-white font-medium text-sm">Брискет на компанию</h4><span class="font-serif text-gold font-semibold text-sm">41 990</span></div>
+                                    <p class="text-xs text-neutral-400 font-light leading-relaxed">В подаче с картофельными дольками, картофелем фри и овощами гриль (на 5-6 человек).</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-8 lg:col-span-2 pt-8">
+                            <h3 class="font-serif text-xl tracking-widest uppercase text-gold border-b border-white/10 pb-3 font-semibold">Пиво на розлив (Лагер)</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between text-xs uppercase tracking-widest text-neutral-500 mb-2"><span>Сорт</span><span>0.4L / 0.2L</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white font-light">Paulaner Munchner Hell (Germany)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 090 / 1 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white font-light">Spaten (Germany)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 990 / 1 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white font-light">Bakalar Pale (Czech Republic)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 590 / 1 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white font-light">Prazacka Charm (Czech Republic)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 590 / 1 590</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white font-light">Stella Artois (Belgium)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">3 090 / 1 990</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white font-light">Estrella Galicia (Spain)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">2 890 / 1 890</span></div>
+                                <div class="flex justify-between items-baseline group"><span class="text-white font-light">Line Brew Local (Qazaqstan)</span><div class="flex-grow mx-4 border-b border-dotted border-white/20"></div><span class="font-serif text-sm font-semibold text-white">1 890 / 1 090</span></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-12 bg-darkbg overflow-hidden border-t border-white/5">
+                <div class="flex space-x-8 w-[200vw]" id="marquee-container">
+                    <img src="https://raw.githubusercontent.com/arabovgenius-ux/Harvey-s/main/IMG_4391.jpeg" alt="Detail 1" class="w-80 h-96 object-cover filter brightness-70 rounded-sm">
+                    <img src="https://raw.githubusercontent.com/arabovgenius-ux/Harvey-s/main/IMG_4392.jpeg" alt="Detail 2" class="w-80 h-96 object-cover filter brightness-70 rounded-sm">
+                    <img src="https://raw.githubusercontent.com/arabovgenius-ux/Harvey-s/main/IMG_4393.jpeg" alt="Detail 3" class="w-80 h-96 object-cover filter brightness-70 rounded-sm">
+                    <img src="https://raw.githubusercontent.com/arabovgenius-ux/Harvey-s/main/IMG_4395.jpeg" alt="Detail 4" class="w-80 h-96 object-cover filter brightness-70 rounded-sm">
+                    <img src="https://raw.githubusercontent.com/arabovgenius-ux/Harvey-s/main/IMG_4397.jpeg" alt="Detail 5" class="w-80 h-96 object-cover filter brightness-70 rounded-sm">
+                </div>
+            </section>
+
+            <footer id="contacts" class="bg-cardbg border-t border-white/5 pt-20 pb-12 px-6 md:px-12">
+                <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+                    
+                    <div class="space-y-6">
+                        <h3 class="font-serif text-2xl font-bold tracking-widest text-white uppercase">Harvey's</h3>
+                        <p class="text-xs text-neutral-400 font-light leading-relaxed max-w-sm">
+                            Премиальный караоке-клуб и паб. Идеальное слияние качественного звука, роскошной атмосферы и высокой гастрономии.
+                        </p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-semibold tracking-widest uppercase text-gold">Локация & Связь</h4>
+                        <div class="space-y-2 text-sm text-neutral-300 font-light">
+                            <p>Адрес: Алматы</p>
+                            <a href="https://maps.app.goo.gl/9SsFCQFek5A57MqcA?g_st=ic" target="_blank" class="text-xs text-gold hover:underline block tracking-wider uppercase">Открыть на картах Google</a>
+                            <p class="pt-4">Телефон / WhatsApp:</p>
+                            <a href="https://wa.me/77772395959" class="text-white hover:text-gold transition-colors duration-300 font-medium">+7 777 239 5959</a>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-semibold tracking-widest uppercase text-gold">Социальные сети</h4>
+                        <div class="space-y-2">
+                            <a href="https://www.instagram.com/harveys_almaty?igsh=MTdwN213cWtsc2I3bw==" target="_blank" class="text-sm text-neutral-300 hover:text-gold transition-colors duration-300 block font-light">
+                                Instagram @harveys_almaty
+                            </a>
+                            <a href="https://youtu.be/VtzS3dtyB-A?si=w796QK1efJZeKMQQ" target="_blank" class="text-sm text-neutral-300 hover:text-gold transition-colors duration-300 block font-light">
+                                YouTube Плейлист / Видео презентация
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="max-w-7xl mx-auto border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-neutral-500 font-light space-y-4 md:space-y-0">
+                    <p>&copy; 2026 Harvey's Almaty. Все права защищены.</p>
+                    <p class="tracking-widest uppercase text-[10px]">Designed for Excellence</p>
+                </div>
+            </footer>
+
         </div>
-        <div class="border-l border-brass/40 pl-4">
-          <p class="font-display text-3xl font-bold text-brass">18:00–03:00</p>
-          <p class="text-sm text-ivory/60 mt-1">работаем каждый день</p>
-        </div>
-        <div class="border-l border-brass/40 pl-4">
-          <p class="font-display text-3xl font-bold text-brass">Hi-Fi</p>
-          <p class="text-sm text-ivory/60 mt-1">профессиональный звук и свет</p>
-        </div>
-        <div class="border-l border-brass/40 pl-4">
-          <p class="font-display text-3xl font-bold text-brass">Bar</p>
-          <p class="text-sm text-ivory/60 mt-1">авторские коктейли и кухня</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+    </main>
 
-<!-- ===================== ROOMS ===================== -->
-<section id="rooms" class="max-w-7xl mx-auto px-6 md:px-10 py-24 md:py-32">
-  <div class="mb-16 max-w-2xl">
-    <p class="eyebrow mb-5" data-reveal>Залы</p>
-    <h2 class="font-display font-bold text-4xl md:text-5xl leading-tight" data-split>Три сцены — один вечер</h2>
-  </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            // 1. Initialize Lenis (Smooth Kinetic Scrolling)
+            const lenis = new Lenis({
+                duration: 1.2,
+                easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                orientation: 'vertical',
+                gestureOrientation: 'vertical',
+                smoothWheel: true,
+                wheelMultiplier: 1,
+                touchMultiplier: 2,
+                infinite: false,
+            });
 
-  <div class="space-y-24">
-    <!-- Room 1 -->
-    <div class="grid lg:grid-cols-2 gap-12 items-center room-block">
-      <div class="media-frame aspect-[4/3] rounded-sm order-1 overflow-hidden">
-        <img class="room-img" src="images/room-small.jpg" alt="Малый зал Harvey's" onerror="this.style.display='none'">
-        <div class="ph-label">images/room-small.jpg</div>
-      </div>
-      <div class="order-2">
-        <span class="room-num font-display text-6xl block mb-4">01</span>
-        <h3 class="font-display font-bold text-2xl md:text-3xl mb-4">Малый зал</h3>
-        <p class="text-ivory/70 leading-relaxed mb-6">
-          Уютное пространство для компании до 6 человек. Идеально для тесного круга друзей
-          или романтичного вечера с караоке.
-        </p>
-        <p class="font-mono text-sm text-brass">до 6 гостей</p>
-      </div>
-    </div>
+            function raf(time) {
+                lenis.raf(time);
+                requestAnimationFrame(raf);
+            }
+            requestAnimationFrame(raf);
 
-    <!-- Room 2 -->
-    <div class="grid lg:grid-cols-2 gap-12 items-center room-block">
-      <div class="media-frame aspect-[4/3] rounded-sm order-1 lg:order-2 overflow-hidden">
-        <img class="room-img" src="images/room-medium.jpg" alt="Средний зал Harvey's" onerror="this.style.display='none'">
-        <div class="ph-label">images/room-medium.jpg</div>
-      </div>
-      <div class="order-2 lg:order-1">
-        <span class="room-num font-display text-6xl block mb-4">02</span>
-        <h3 class="font-display font-bold text-2xl md:text-3xl mb-4">Средний зал</h3>
-        <p class="text-ivory/70 leading-relaxed mb-6">
-          Просторный зал для дружеских встреч и небольших праздников — до 10 гостей,
-          расширенная барная зона и танцпол рядом со сценой.
-        </p>
-        <p class="font-mono text-sm text-brass">до 10 гостей</p>
-      </div>
-    </div>
+            // Connect Lenis with GSAP ScrollTrigger
+            lenis.on('scroll', ScrollTrigger.update);
+            gsap.ticker.add((time) => {
+                lenis.raf(time * 1000);
+            });
+            gsap.ticker.lagSmoothing(0);
 
-    <!-- Room 3 -->
-    <div class="grid lg:grid-cols-2 gap-12 items-center room-block">
-      <div class="media-frame aspect-[4/3] rounded-sm order-1 overflow-hidden">
-        <img class="room-img" src="images/room-vip.jpg" alt="Президентский зал Harvey's" onerror="this.style.display='none'">
-        <div class="ph-label">images/room-vip.jpg</div>
-      </div>
-      <div class="order-2">
-        <span class="room-num font-display text-6xl block mb-4">03</span>
-        <h3 class="font-display font-bold text-2xl md:text-3xl mb-4">Президентский зал</h3>
-        <p class="text-ivory/70 leading-relaxed mb-6">
-          Самое эффектное пространство клуба — до 16 гостей, отдельный вход, премиальная
-          сцена и сервис для больших компаний и корпоративов.
-        </p>
-        <p class="font-mono text-sm text-brass">до 16 гостей</p>
-      </div>
-    </div>
-  </div>
-</section>
+            // 2. Custom Fluid Cursor
+            const cursor = document.getElementById("custom-cursor");
+            window.addEventListener("mousemove", (e) => {
+                gsap.to(cursor, {
+                    x: e.clientX,
+                    y: e.clientY,
+                    duration: 0.1,
+                    ease: "power2.out"
+                });
+            });
 
-<!-- ===================== MENU ===================== -->
-<section id="menu" class="max-w-7xl mx-auto px-6 md:px-10 py-24 md:py-32">
-  <div class="mb-12 max-w-2xl">
-    <p class="eyebrow mb-5" data-reveal>Меню</p>
-    <h2 class="font-display font-bold text-4xl md:text-5xl leading-tight" data-split>Вкус вечера</h2>
-  </div>
+            // 3. Premium Text Reveal Animation using SplitType & GSAP
+            const heroTitle = new SplitType('#hero-title', { types: 'chars, words' });
+            gsap.from(heroTitle.chars, {
+                opacity: 0,
+                y: 60,
+                stagger: 0.03,
+                duration: 1.4,
+                ease: "power4.out",
+                delay: 0.2
+            });
 
-  <div class="flex flex-wrap gap-3 mb-12" id="chips">
-    <button class="chip active" data-filter="all">Всё меню</button>
-    <button class="chip" data-filter="kitchen">Кухня</button>
-    <button class="chip" data-filter="snacks">Снеки</button>
-    <button class="chip" data-filter="cocktails">Коктейли</button>
-    <button class="chip" data-filter="strong">Крепкие напитки</button>
-    <button class="chip" data-filter="wine">Вино и шампанское</button>
-    <button class="chip" data-filter="beer">Пиво</button>
-    <button class="chip" data-filter="soft">Безалкогольное</button>
-  </div>
+            // 4. Parallax Smooth Image Effect via ScrollTrigger
+            const parallaxImages = document.querySelectorAll('.parallax-img');
+            parallaxImages.forEach(img => {
+                const speed = img.getAttribute('data-speed') || 0.1;
+                gsap.to(img, {
+                    yPercent: speed * 100,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: img.parentElement,
+                        start: "top bottom",
+                        end: "bottom top",
+                        scrub: true
+                    }
+                });
+            });
 
-  <div id="menu-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            // 5. Horizontal Gallery Auto Loop Animation
+            gsap.to("#marquee-container", {
+                xPercent: -20,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: "#marquee-container",
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: 1
+                }
+            });
 
-    <!-- KITCHEN -->
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="kitchen">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/kitchen-1.jpg" alt="Мясная тарелка" onerror="this.style.display='none'"><div class="ph-label">menu/kitchen-1.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Кухня</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Мясная тарелка</h4>
-        <p class="text-sm text-ivory/60 mb-4">Вяленая говядина, брезаола, оливки, гриссини</p>
-        <p class="font-mono text-brasslt">6 900 ₸</p>
-      </div>
-    </div>
+            // 6. Barba.js Framework Core Config for Premium Single Page Experience
+            barba.init({
+                transitions: [{
+                    name: 'opacity-transition',
+                    leave(data) {
+                        return gsap.to(data.current.container, {
+                            opacity: 0,
+                            duration: 0.5
+                        });
+                    },
+                    enter(data) {
+                        return gsap.from(data.next.container, {
+                            opacity: 0,
+                            duration: 0.5
+                        });
+                    }
+                }]
+            });
 
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="kitchen">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/kitchen-2.jpg" alt="Сырная тарелка" onerror="this.style.display='none'"><div class="ph-label">menu/kitchen-2.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Кухня</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Сырная тарелка</h4>
-        <p class="text-sm text-ivory/60 mb-4">Четыре сорта сыра, мёд, орехи, виноград</p>
-        <p class="font-mono text-brasslt">7 400 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="kitchen">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/kitchen-3.jpg" alt="Стейк рибай" onerror="this.style.display='none'"><div class="ph-label">menu/kitchen-3.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Кухня</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Стейк рибай</h4>
-        <p class="text-sm text-ivory/60 mb-4">300 г, соус на выбор, картофель айдахо</p>
-        <p class="font-mono text-brasslt">12 500 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="kitchen">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/kitchen-4.jpg" alt="Паста с трюфелем" onerror="this.style.display='none'"><div class="ph-label">menu/kitchen-4.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Кухня</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Паста с трюфелем</h4>
-        <p class="text-sm text-ivory/60 mb-4">Тальятелле, сливочный соус, пармезан</p>
-        <p class="font-mono text-brasslt">6 200 ₸</p>
-      </div>
-    </div>
-
-    <!-- SNACKS -->
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="snacks">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/snack-1.jpg" alt="Наггетсы" onerror="this.style.display='none'"><div class="ph-label">menu/snack-1.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Снеки</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Куриные наггетсы</h4>
-        <p class="text-sm text-ivory/60 mb-4">Домашняя панировка, три соуса</p>
-        <p class="font-mono text-brasslt">3 400 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="snacks">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/snack-2.jpg" alt="Картофель фри" onerror="this.style.display='none'"><div class="ph-label">menu/snack-2.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Снеки</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Картофель фри трюфель</h4>
-        <p class="text-sm text-ivory/60 mb-4">Пармезан, трюфельное масло, зелень</p>
-        <p class="font-mono text-brasslt">3 200 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="snacks">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/snack-3.jpg" alt="Крылья BBQ" onerror="this.style.display='none'"><div class="ph-label">menu/snack-3.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Снеки</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Куриные крылья BBQ</h4>
-        <p class="text-sm text-ivory/60 mb-4">Острый соус барбекю, сельдерей</p>
-        <p class="font-mono text-brasslt">4 100 ₸</p>
-      </div>
-    </div>
-
-    <!-- COCKTAILS -->
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="cocktails">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/cocktail-1.jpg" alt="Harvey's Old Fashioned" onerror="this.style.display='none'"><div class="ph-label">menu/cocktail-1.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Коктейли</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Harvey's Old Fashioned</h4>
-        <p class="text-sm text-ivory/60 mb-4">Бурбон, апельсиновый биттер, карамель</p>
-        <p class="font-mono text-brasslt">4 800 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="cocktails">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/cocktail-2.jpg" alt="Espresso Martini" onerror="this.style.display='none'"><div class="ph-label">menu/cocktail-2.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Коктейли</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Espresso Martini</h4>
-        <p class="text-sm text-ivory/60 mb-4">Водка, кофейный ликёр, свежий эспрессо</p>
-        <p class="font-mono text-brasslt">4 600 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="cocktails">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/cocktail-3.jpg" alt="Smoky Margarita" onerror="this.style.display='none'"><div class="ph-label">menu/cocktail-3.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Коктейли</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Smoky Margarita</h4>
-        <p class="text-sm text-ivory/60 mb-4">Мескаль, текила, лайм, копчёная соль</p>
-        <p class="font-mono text-brasslt">5 200 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="cocktails">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/cocktail-4.jpg" alt="Velvet Sour" onerror="this.style.display='none'"><div class="ph-label">menu/cocktail-4.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Коктейли</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Velvet Sour</h4>
-        <p class="text-sm text-ivory/60 mb-4">Виски, вишнёвый ликёр, лимон, яичный белок</p>
-        <p class="font-mono text-brasslt">5 000 ₸</p>
-      </div>
-    </div>
-
-    <!-- STRONG -->
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="strong">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/strong-1.jpg" alt="Виски" onerror="this.style.display='none'"><div class="ph-label">menu/strong-1.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Крепкие напитки</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Виски выдержанный</h4>
-        <p class="text-sm text-ivory/60 mb-4">50 мл, подборка односолодовых</p>
-        <p class="font-mono text-brasslt">от 4 500 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="strong">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/strong-2.jpg" alt="Водка" onerror="this.style.display='none'"><div class="ph-label">menu/strong-2.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Крепкие напитки</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Водка премиум</h4>
-        <p class="text-sm text-ivory/60 mb-4">50 мл, охлаждённая подача</p>
-        <p class="font-mono text-brasslt">от 2 200 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="strong">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/strong-3.jpg" alt="Ром и текила" onerror="this.style.display='none'"><div class="ph-label">menu/strong-3.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Крепкие напитки</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Ром и текила</h4>
-        <p class="text-sm text-ivory/60 mb-4">50 мл, выдержанные и бланко</p>
-        <p class="font-mono text-brasslt">от 3 200 ₸</p>
-      </div>
-    </div>
-
-    <!-- WINE -->
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="wine">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/wine-1.jpg" alt="Шампанское" onerror="this.style.display='none'"><div class="ph-label">menu/wine-1.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Вино и шампанское</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Шампанское брют</h4>
-        <p class="text-sm text-ivory/60 mb-4">Бутылка 0.75 л</p>
-        <p class="font-mono text-brasslt">18 000 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="wine">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/wine-2.jpg" alt="Красное вино" onerror="this.style.display='none'"><div class="ph-label">menu/wine-2.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Вино и шампанское</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Красное сухое</h4>
-        <p class="text-sm text-ivory/60 mb-4">Бокал 150 мл / бутылка 0.75 л</p>
-        <p class="font-mono text-brasslt">3 200 / 14 500 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="wine">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/wine-3.jpg" alt="Белое вино" onerror="this.style.display='none'"><div class="ph-label">menu/wine-3.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Вино и шампанское</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Белое сухое</h4>
-        <p class="text-sm text-ivory/60 mb-4">Бокал 150 мл / бутылка 0.75 л</p>
-        <p class="font-mono text-brasslt">3 200 / 14 500 ₸</p>
-      </div>
-    </div>
-
-    <!-- BEER -->
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="beer">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/beer-1.jpg" alt="Крафтовое пиво" onerror="this.style.display='none'"><div class="ph-label">menu/beer-1.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Пиво</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Крафтовое пиво</h4>
-        <p class="text-sm text-ivory/60 mb-4">0.5 л, светлое / тёмное</p>
-        <p class="font-mono text-brasslt">2 400 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="beer">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/beer-2.jpg" alt="Пшеничное пиво" onerror="this.style.display='none'"><div class="ph-label">menu/beer-2.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Пиво</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Пшеничное нефильтрованное</h4>
-        <p class="text-sm text-ivory/60 mb-4">0.5 л</p>
-        <p class="font-mono text-brasslt">2 600 ₸</p>
-      </div>
-    </div>
-
-    <!-- SOFT -->
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="soft">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/soft-1.jpg" alt="Лимонад" onerror="this.style.display='none'"><div class="ph-label">menu/soft-1.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Безалкогольное</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Авторский лимонад</h4>
-        <p class="text-sm text-ivory/60 mb-4">Клубника-базилик / имбирь-лайм</p>
-        <p class="font-mono text-brasslt">2 200 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="soft">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/soft-2.jpg" alt="Кальян" onerror="this.style.display='none'"><div class="ph-label">menu/soft-2.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Безалкогольное</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Кальян классический</h4>
-        <p class="text-sm text-ivory/60 mb-4">Крепость и вкус на выбор</p>
-        <p class="font-mono text-brasslt">7 500 ₸</p>
-      </div>
-    </div>
-
-    <div class="menu-card rounded-sm overflow-hidden" data-cat="soft">
-      <div class="media-frame aspect-[4/3]"><img src="images/menu/soft-3.jpg" alt="Свежевыжатый сок" onerror="this.style.display='none'"><div class="ph-label">menu/soft-3.jpg</div></div>
-      <div class="p-5">
-        <p class="font-mono text-[.65rem] tracking-widest text-brass/70 uppercase mb-2">Безалкогольное</p>
-        <h4 class="font-display font-semibold text-lg mb-1">Свежевыжатый сок</h4>
-        <p class="text-sm text-ivory/60 mb-4">Апельсин / грейпфрут / яблоко</p>
-        <p class="font-mono text-brasslt">1 900 ₸</p>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ===================== GALLERY ===================== -->
-<section id="gallery" class="max-w-7xl mx-auto px-6 md:px-10 py-24 md:py-32">
-  <div class="mb-14 max-w-2xl">
-    <p class="eyebrow mb-5" data-reveal>Атмосфера</p>
-    <h2 class="font-display font-bold text-4xl md:text-5xl leading-tight" data-split>Каждый вечер — на сцене</h2>
-  </div>
-
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[180px] md:auto-rows-[220px]">
-    <div class="media-frame gallery-item rounded-sm row-span-2 col-span-1"><img src="images/gallery-1.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">gallery-1.jpg</div></div>
-    <div class="media-frame gallery-item rounded-sm"><img src="images/gallery-2.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">gallery-2.jpg</div></div>
-    <div class="media-frame gallery-item rounded-sm"><img src="images/gallery-3.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">gallery-3.jpg</div></div>
-    <div class="media-frame gallery-item rounded-sm row-span-2"><img src="images/gallery-4.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">gallery-4.jpg</div></div>
-    <div class="media-frame gallery-item rounded-sm"><img src="images/gallery-5.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">gallery-5.jpg</div></div>
-    <div class="media-frame gallery-item rounded-sm row-span-2"><img src="images/gallery-6.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">gallery-6.jpg</div></div>
-    <div class="media-frame gallery-item rounded-sm"><img src="images/gallery-7.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">gallery-7.jpg</div></div>
-    <div class="media-frame gallery-item rounded-sm"><img src="images/gallery-8.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">gallery-8.jpg</div></div>
-  </div>
-</section>
-
-<!-- ===================== BOOKING CTA ===================== -->
-<section class="relative py-28 md:py-36 bg-panel border-y border-line overflow-hidden">
-  <div class="absolute inset-0 opacity-40 media-frame"><img src="images/cta-bg.jpg" alt="" onerror="this.style.display='none'"><div class="ph-label">images/cta-bg.jpg</div></div>
-  <div class="absolute inset-0 bg-void/70"></div>
-  <div class="relative z-10 max-w-3xl mx-auto text-center px-6">
-    <p class="eyebrow mb-6">Бронирование</p>
-    <h2 class="font-display font-bold text-3xl md:text-5xl leading-tight mb-8" data-split>
-      Пусть этот вечер запомнится
-    </h2>
-    <p class="text-ivory/70 mb-10">Напишите нам в WhatsApp — подберём зал под компанию и повод.</p>
-    <a href="https://wa.me/77772395959" target="_blank" rel="noopener" class="btn-primary inline-block rounded-full px-10 py-4 text-sm">
-      Написать в WhatsApp
-    </a>
-  </div>
-</section>
-
-<!-- ===================== CONTACTS / FOOTER ===================== -->
-<footer id="contacts" class="max-w-7xl mx-auto px-6 md:px-10 py-20 md:py-28">
-  <div class="grid lg:grid-cols-2 gap-14">
-    <div>
-      <p class="eyebrow mb-5">Контакты</p>
-      <h2 class="font-display font-bold text-3xl md:text-4xl mb-10">Ждём вас в Алматы</h2>
-
-      <div class="space-y-8">
-        <div>
-          <p class="text-sm text-ivory/50 mb-1 font-mono uppercase tracking-widest">Адрес</p>
-          <p class="text-lg mb-2">Алматы</p>
-          <a href="https://maps.app.goo.gl/9SsFCQFek5A57MqcA?g_st=ic" target="_blank" rel="noopener" class="btn-ghost inline-block rounded-full px-6 py-2.5 text-sm">
-            Открыть на карте
-          </a>
-        </div>
-
-        <div>
-          <p class="text-sm text-ivory/50 mb-1 font-mono uppercase tracking-widest">WhatsApp</p>
-          <a href="https://wa.me/77772395959" target="_blank" rel="noopener" class="text-lg hover:text-brass transition-colors">+7 777 239 59 59</a>
-        </div>
-
-        <div>
-          <p class="text-sm text-ivory/50 mb-1 font-mono uppercase tracking-widest">Instagram</p>
-          <a href="https://www.instagram.com/harveys_almaty" target="_blank" rel="noopener" class="text-lg hover:text-brass transition-colors">@harveys_almaty</a>
-        </div>
-
-        <div>
-          <p class="text-sm text-ivory/50 mb-1 font-mono uppercase tracking-widest">Часы работы</p>
-          <p class="text-lg">Ежедневно, 18:00 — 03:00</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="media-frame rounded-sm min-h-[320px]">
-      <iframe
-        src="https://www.google.com/maps?q=Harvey%27s%20Karaoke%20Almaty&output=embed"
-        class="w-full h-full min-h-[320px] border-0 grayscale contrast-125 opacity-90"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade">
-      </iframe>
-    </div>
-  </div>
-
-  <div class="mt-20 pt-8 border-t border-line flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-ivory/40">
-    <p>&copy; <span id="year"></span> Harvey's Karaoke Lounge. Все права защищены.</p>
-    <p class="font-mono">Almaty, Kazakhstan</p>
-  </div>
-</footer>
-
-<script>
-document.getElementById('year').textContent = new Date().getFullYear();
-
-/* Mark loaded images so placeholder labels hide */
-document.querySelectorAll('.media-frame img').forEach(img => {
-  img.addEventListener('load', () => img.classList.add('loaded'));
-  if (img.complete && img.naturalWidth > 0) img.classList.add('loaded');
-});
-
-/* Mobile menu */
-const burger = document.getElementById('burger');
-const mobileMenu = document.getElementById('mobile-menu');
-burger.addEventListener('click', () => {
-  mobileMenu.classList.toggle('hidden');
-  mobileMenu.classList.toggle('flex');
-});
-mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-  mobileMenu.classList.add('hidden'); mobileMenu.classList.remove('flex');
-}));
-
-/* Header background on scroll */
-const header = document.getElementById('site-header');
-function updateHeader(){
-  if (window.scrollY > 40) {
-    header.classList.add('bg-void/90','backdrop-blur','border-b','border-line');
-  } else {
-    header.classList.remove('bg-void/90','backdrop-blur','border-b','border-line');
-  }
-}
-window.addEventListener('scroll', updateHeader);
-
-/* Menu filter chips */
-const chips = document.querySelectorAll('.chip');
-const cards = document.querySelectorAll('#menu-grid .menu-card');
-chips.forEach(chip => {
-  chip.addEventListener('click', () => {
-    chips.forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    const filter = chip.dataset.filter;
-    cards.forEach(card => {
-      const show = filter === 'all' || card.dataset.cat === filter;
-      gsap.to(card, {
-        opacity: show ? 1 : 0,
-        scale: show ? 1 : 0.94,
-        duration: 0.35,
-        ease: 'power2.out',
-        onStart(){ if(show) card.style.display='block'; },
-        onComplete(){ if(!show) card.style.display='none'; }
-      });
-    });
-  });
-});
-
-/* ===== GSAP + Lenis + ScrollTrigger ===== */
-gsap.registerPlugin(ScrollTrigger);
-
-const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
-function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
-requestAnimationFrame(raf);
-lenis.on('scroll', ScrollTrigger.update);
-gsap.ticker.add((time) => { lenis.raf(time * 1000); });
-gsap.ticker.lagSmoothing(0);
-
-/* Curtain intro + hero title reveal */
-window.addEventListener('load', () => {
-  const heroSplit = new SplitType('#hero-title', { types: 'chars' });
-  gsap.set(heroSplit.chars, { yPercent: 120, opacity: 0 });
-
-  const tl = gsap.timeline({ defaults: { ease: 'power4.inOut' } });
-  tl.to('#curtain-l', { xPercent: -100, duration: 1.1, delay: 0.2 })
-    .to('#curtain-r', { xPercent: 100, duration: 1.1 }, '<')
-    .to(heroSplit.chars, { yPercent: 0, opacity: 1, stagger: 0.035, duration: 0.9, ease: 'power3.out' }, '-=0.5')
-    .from('[data-reveal]', { opacity: 0, y: 24, stagger: 0.12, duration: 0.8, ease: 'power3.out' }, '-=0.6');
-});
-
-/* Split headings reveal on scroll */
-document.querySelectorAll('[data-split]').forEach(el => {
-  const st = new SplitType(el, { types: 'lines', tagName: 'span' });
-  gsap.from(st.lines, {
-    yPercent: 100, opacity: 0, stagger: 0.08, duration: 0.9, ease: 'power3.out',
-    scrollTrigger: { trigger: el, start: 'top 85%' }
-  });
-});
-
-/* Generic reveal-on-scroll for [data-reveal] outside hero */
-gsap.utils.toArray('[data-reveal]').forEach(el => {
-  if (el.closest('#top')) return;
-  gsap.from(el, {
-    opacity: 0, y: 30, duration: 0.8, ease: 'power3.out',
-    scrollTrigger: { trigger: el, start: 'top 88%' }
-  });
-});
-
-/* Menu cards batch reveal */
-ScrollTrigger.batch('.menu-card', {
-  start: 'top 90%',
-  onEnter: batch => gsap.from(batch, { opacity: 0, y: 40, stagger: 0.08, duration: 0.7, ease: 'power3.out' })
-});
-
-/* Gallery items reveal */
-ScrollTrigger.batch('.gallery-item', {
-  start: 'top 92%',
-  onEnter: batch => gsap.from(batch, { opacity: 0, scale: 0.9, stagger: 0.06, duration: 0.7, ease: 'power3.out' })
-});
-
-/* Room image parallax on scroll */
-document.querySelectorAll('.room-img').forEach(img => {
-  gsap.fromTo(img, { yPercent: -8, scale: 1.15 }, {
-    yPercent: 8, scale: 1.02, ease: 'none',
-    scrollTrigger: { trigger: img.closest('.room-block'), start: 'top bottom', end: 'bottom top', scrub: true }
-  });
-});
-
-/* Infinite marquee */
-gsap.to('#marquee', { xPercent: -50, duration: 22, ease: 'none', repeat: -1 });
-
-/* Hero spotlight follows cursor (desktop only) */
-const spotlight = document.getElementById('spotlight');
-if (window.matchMedia('(pointer:fine)').matches) {
-  document.getElementById('top').addEventListener('mousemove', (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    spotlight.style.setProperty('--x', (e.clientX - rect.left) + 'px');
-    spotlight.style.setProperty('--y', (e.clientY - rect.top) + 'px');
-  });
-}
-
-/* Barba.js — ready for future multi-page transitions */
-if (window.barba) {
-  try {
-    barba.init({
-      transitions: [{
-        name: 'fade',
-        leave(data){ return gsap.to(data.current.container, { opacity: 0, duration: 0.4 }); },
-        enter(data){ return gsap.from(data.next.container, { opacity: 0, duration: 0.4 }); }
-      }]
-    });
-  } catch(e) { /* single-page site: barba has nothing to transition between */ }
-}
-</script>
-
+        });
+    </script>
 </body>
 </html>
